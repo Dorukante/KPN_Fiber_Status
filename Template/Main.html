@@ -1,0 +1,275 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>KPN Fiber Status</title>
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+          rel="stylesheet">
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet"
+          href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+    <!-- Leaflet JavaScript -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <style>
+        body {
+            background-color: #f5f6fa;
+            font-family: Arial, sans-serif;
+        }
+
+        .dashboard {
+            padding: 20px 25px;
+        }
+
+        .dashboard-title {
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 18px;
+        }
+
+        .stat-card {
+            background-color: white;
+            padding: 12px;
+            text-align: center;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            height: 100%;
+        }
+
+        .stat-card h6 {
+            font-size: 13px;
+            color: #6c757d;
+            margin-bottom: 5px;
+        }
+
+        .stat-card h3 {
+            font-size: 23px;
+            font-weight: 600;
+            margin-bottom: 0;
+        }
+
+        .text-installing {
+            color: #0d6efd;
+        }
+
+        .bg-installing {
+            background-color: #0d6efd;
+        }
+
+        .progress {
+            height: 12px;
+            border-radius: 5px;
+        }
+
+        .map-title {
+            font-size: 17px;
+            font-weight: 600;
+        }
+
+        #geo-map {
+            width: 100%;
+            height: 550px;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+
+        .map-footer {
+            margin-top: 8px;
+        }
+
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 18px;
+            font-size: 13px;
+            margin-top: 12px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .legend-dot {
+            width: 11px;
+            height: 11px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="dashboard">
+
+        <!-- Main Title -->
+        <h2 class="dashboard-title">KPN Fiber Status</h2>
+
+        <!-- Statistics -->
+        <div class="row g-3 mb-3">
+
+            <div class="col-6 col-md">
+                <div class="stat-card">
+                    <h6>Total Addresses</h6>
+                    <h3 id="total-count">0</h3>
+                </div>
+            </div>
+
+            <div class="col-6 col-md">
+                <div class="stat-card">
+                    <h6>Active</h6>
+                    <h3 id="active-count" class="text-success">0</h3>
+                </div>
+            </div>
+
+            <div class="col-6 col-md">
+                <div class="stat-card">
+                    <h6>Planned</h6>
+                    <h3 id="planned-count" class="text-warning">0</h3>
+                </div>
+            </div>
+
+            <div class="col-6 col-md">
+                <div class="stat-card">
+                    <h6>Currently Installing</h6>
+                    <h3 id="currently-installing-count"
+                        class="text-installing">0</h3>
+                </div>
+            </div>
+
+            <div class="col-6 col-md">
+                <div class="stat-card">
+                    <h6>Not Available</h6>
+                    <h3 id="not-available-count"
+                        class="text-danger">0</h3>
+                </div>
+            </div>
+
+            <div class="col-6 col-md">
+                <div class="stat-card">
+                    <h6>Unknown</h6>
+                    <h3 id="unknown-count"
+                        class="text-secondary">0</h3>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Distribution Bar -->
+        <div class="progress mb-4">
+
+            <div id="active-bar"
+                 class="progress-bar bg-success"></div>
+
+            <div id="planned-bar"
+                 class="progress-bar bg-warning"></div>
+
+            <div id="currently-installing-bar"
+                 class="progress-bar bg-installing"></div>
+
+            <div id="not-available-bar"
+                 class="progress-bar bg-danger"></div>
+
+            <div id="unknown-bar"
+                 class="progress-bar bg-secondary"></div>
+
+        </div>
+
+        
+    <!-- Map Header and Filters -->
+    <div class="d-flex justify-content-between align-items-center mb-3 gap-3">
+
+        <h5 class="map-title mb-0">
+            Geographic Distribution
+        </h5>
+
+        <div class="d-flex gap-2">
+
+            <!-- City Filter -->
+            <select
+                id="city-filter"
+                class="form-select form-select-sm w-auto"
+                aria-label="Filter by city"
+            >
+                <option value="All">All Cities</option>
+            </select>
+
+            <!-- Fiber Status Filter -->
+            <select
+                id="status-filter"
+                class="form-select form-select-sm w-auto"
+                aria-label="Filter by fiber status"
+            >
+                <option value="All">All Statuses</option>
+                <option value="Active">Active Only</option>
+                <option value="Planned">Planned Only</option>
+                <option value="Currently Installing">Installing Only</option>
+                <option value="Not Available">Not Available Only</option>
+                <option value="Unknown">Unknown Only</option>
+            </select>
+
+        </div>
+
+    </div>
+
+
+        <!-- Leaflet Map -->
+        <div id="geo-map"></div>
+
+        <!-- Map Legend -->
+        <div class="legend">
+
+            <div class="legend-item">
+                <span class="legend-dot"
+                      style="background: green;"></span>
+                Active
+            </div>
+
+            <div class="legend-item">
+                <span class="legend-dot"
+                      style="background: orange;"></span>
+                Planned
+            </div>
+
+            <div class="legend-item">
+                <span class="legend-dot"
+                      style="background: #0d6efd;"></span>
+                Currently Installing
+            </div>
+
+            <div class="legend-item">
+                <span class="legend-dot"
+                      style="background: red;"></span>
+                Not Available
+            </div>
+
+            <div class="legend-item">
+                <span class="legend-dot"
+                      style="background: gray;"></span>
+                Unknown
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Geographic Visualization -->
+    <script src="{{ url_for('getResource', filename='Geovis.js') }}"></script>
+
+    <script>
+        Visualization();
+    </script>
+
+</body>
+</html>
